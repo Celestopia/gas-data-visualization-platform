@@ -19,6 +19,7 @@ npm run dev
       <li><code>dist</code>：存放编译后的代码。</li>
       <li><code>node_modules</code>：存放所有项目依赖包。</li>
       <li><code>public</code>：存放静态资源，如图片、字体等。</li>
+      <li><code>data</code>：存放json格式的图表数据文件。</li>
       <li><code>src</code>：主要的开发目录。
         <ul>
           <li><code>assets</code>：存放静态资源，如图片、字体等。</li>
@@ -70,7 +71,15 @@ src
 │   │   ├── BarChart.vue // 柱状图组件
 │   │   ├── LineChart.vue // 折线图组件
 │   │   ├── PieChart.vue // 饼图组件
-│   │   └── HistogramChart.vue // 折线图组件
+│   │   ├── HistogramChart.vue // 折线图组件
+│   │   ├──
+│   │   ├──
+│   │   ├──
+│   │   ├──
+│   │   ├──
+│   │   ├──
+│   │   ├──
+│   │   └──
 │   └── icons // 存放图标组件（示例组件，留作学习用，暂未删除）
 │       ├── IconCommunity.vue
 │       └── ...

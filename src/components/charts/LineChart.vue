@@ -1,65 +1,175 @@
 <template>
-  <h2>折线图示例</h2>
   <div
     class="chart-container"
     ref="chart"
-    style="width: 600px; height: 400px"
+    :style="{ width: computedWidth, height: computedHeight }"
   ></div>
+  <!-- 使用动态样式绑定，动态设置宽度和高度 -->
 </template>
 
 <script setup>
-// 注意该脚本是在组件挂载之前运行的，要让echarts正确渲染，应当使用钩子函数onMounted，以确保DOM渲染完成后再初始化Echarts图表。
-import * as echarts from 'echarts' // 导入 ECharts
-import { onMounted, ref } from 'vue'
+import * as echarts from 'echarts'
+import { onMounted, ref, defineProps } from 'vue'
 
-const chart = ref(null) // 用 null 初始化chart变量，等待 DOM 渲染完成后再初始化 Echarts 图表
+// 定义调用组件时传入的参数
+const props = defineProps({
+  dataFilePath: {
+    // 数据文件路径
+    type: String,
+    default: '/data/default/line-default-data.json', // 设置默认值
+  },
+  width: {
+    // 容器宽度
+    type: String,
+    default: '600px', // 设置默认值
+  },
+  height: {
+    // 容器高度
+    type: String,
+    default: '400px', // 设置默认值
+  },
+  title: {
+    // 图表标题
+    type: String,
+    default: null, // 设置默认值
+  },
+  subtitle: {
+    // 图表副标题
+    type: String,
+    default: null, // 设置默认值
+  },
+})
 
-onMounted(() => {
-  // 在onMounted这一钩子函数中初始化ECharts，确保DOM渲染完成后再初始化Echarts图表
-  // Vue 会在组件的 DOM 完成挂载到页面上后，自动调用 onMounted 钩子。此时，所有 DOM 元素都已经被插入到文档中。
-  var mCharts = echarts.init(chart.value) // chart.value 对应 ref="chart" 的实际 DOM 元素
+const computedWidth = ref(props.width) // 计算宽度
+const computedHeight = ref(props.height) // 计算高度
 
-  var xDataArr = [
-    '1月',
-    '2月',
-    '3月',
-    '4月',
-    '5月',
-    '6月',
-    '7月',
-    '8月',
-    '9月',
-    '10月',
-    '11月',
-    '12月',
-  ]
-  var yDataArr = [
-    3000, 2800, 900, 1000, 800, 700, 1400, 1300, 900, 1000, 800, 600,
-  ]
+const chart = ref(null)
 
+onMounted(async () => {
+  // 当组件容器被挂载到页面上后，执行
+  var mCharts = echarts.init(chart.value) // 在组件容器上挂载echarts实例
+
+  // 读取并解析 JSON 文件
+  const response = await fetch(props.dataFilePath) // 获取数据文件
+  const jsonData = await response.json() // 解析为 JSON 数据
+  const xDataArr = jsonData.xDataArr // 提取从 JSON 文件中获取的值
+  const SeriesData = jsonData.SeriesData // 提取从 JSON 文件中获取的值
+  let series = [] // 构建series参数，用于option中
+  for (let i = 0; i < SeriesData.length; i++) {
+    series.push({
+      name: SeriesData[i].name,
+      type: 'line',
+      data: SeriesData[i].data,
+    })
+  }
+
+  // 设置图表选项
   var option = {
+    title: {
+      left: 'center', // 标题水平位置：居中
+      top: 'top', // 标题垂直位置：顶部
+      text: props.title, // 标题内容
+      subtext: props.subtitle, // 副标题内容（默认为空）
+    },
     xAxis: {
-      type: 'category',
-      data: xDataArr,
+      type: 'category', // 类目轴 // 注：考虑更换为时间轴（type: 'time'）
+      data: xDataArr, // x轴数据（1维数组）
+      name: '时间', // 坐标轴名称
     },
     yAxis: {
-      type: 'value',
+      type: 'value', // 数值轴
+      name: '浓度', // 坐标轴名称
     },
-    series: [
+    series: series, // series定义见上文
+    toolbox: {
+      // 工具栏设置
+      feature: {
+        dataZoom: {
+          // 数据区域缩放
+          yAxisIndex: 'none', // 不控制任何y轴
+        },
+        restore: {}, // 还原
+        dataView: {}, // 数据项视图（展示原始数据）
+        saveAsImage: {}, // 保存为图片
+      },
+    },
+    tooltip: {
+      // 提示框设置
+      trigger: 'axis', // 坐标轴触发
+      backgroundColor: 'rgba(255,255,255,0.5)', // 提示框浮层的背景颜色
+      borderColor: 'rgba(192,192,192,1)', // 提示框浮层的边框颜色
+      position: function (point) {
+        // 自定义提示框浮层位置
+        return {
+          left: point[0], // 提示框水平位置：左侧与鼠标位置对齐
+          top: '10%', // 提示框垂直位置：到容器顶部距离为容器高度的10%
+        }
+      },
+    },
+    dataZoom: [
+      // 控制区域缩放
       {
-        name: '康师傅',
-        data: yDataArr,
-        type: 'line', // 设置图表类型为 折线图
+        type: 'inside', // 内置于坐标系中，使用户可以在坐标系上通过鼠标拖拽、鼠标滚轮、手指滑动（触屏上）来缩放或漫游坐标系。
+        xAxisIndex: [0], // 控制x轴缩放
+        start: 0, // 数据窗口范围的起始百分比
+        end: 100, // 数据窗口范围的结束百分比
+        filterMode: 'empty', // 当前数据窗口外的数据被设置为空。即不会影响其他轴的数据范围。
+      },
+      {
+        type: 'inside', // 内置于坐标系中，使用户可以在坐标系上通过鼠标拖拽、鼠标滚轮、手指滑动（触屏上）来缩放或漫游坐标系。
+        yAxisIndex: [0], // 控制y轴缩放
+        start: 0, // 数据窗口范围的起始百分比
+        end: 100, // 数据窗口范围的结束百分比
+        filterMode: 'empty', // 当前数据窗口外的数据被设置为空。即不会影响其他轴的数据范围。
       },
     ],
+    /*
+    visualMap: {
+      top: 50,
+      right: 10,
+      pieces: [
+        {
+          gt: 0,
+          lte: 50,
+          color: '#93CE07',
+        },
+        {
+          gt: 50,
+          lte: 100,
+          color: '#FBDB0F',
+        },
+        {
+          gt: 100,
+          lte: 150,
+          color: '#FC7D02',
+        },
+        {
+          gt: 150,
+          lte: 200,
+          color: '#FD0100',
+        },
+        {
+          gt: 200,
+          lte: 300,
+          color: '#AA069F',
+        },
+        {
+          gt: 300,
+          color: '#AC3B2A',
+        },
+      ],
+      outOfRange: {
+        color: '#999',
+      },
+    },*/
   }
 
   mCharts.setOption(option) // 设置图表选项
 })
 </script>
 
-<style>
+<style scoped>
 .chart-container {
-  border: 1px solid #ccc;
+  border: 1px solid rgba(216, 216, 216, 1);
 }
 </style>

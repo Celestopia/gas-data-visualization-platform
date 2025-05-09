@@ -56,7 +56,7 @@ nav {
 
 main {
   display: block;
-  width: 100%;
+  width: 100vw;
 }
 
 .logo {
